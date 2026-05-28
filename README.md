@@ -91,10 +91,33 @@ docker-compose down
 
 ### Services
 
-| Service   | Port | Description                    |
-|-----------|------|--------------------------------|
-| Backend   | 3002 | Node.js/TypeScript API server  |
-| Redis     | 6379 | Cache and session store        |
+| Service    | Port  | Description                          |
+|------------|-------|--------------------------------------|
+| Backend    | 3002  | Node.js/TypeScript API server        |
+| Redis      | 6379  | Cache and session store              |
+| Jaeger UI  | 16686 | Distributed tracing dashboard        |
+| Prometheus | 9090  | Metrics collection and alerting      |
+| Metrics    | 9464  | Backend Prometheus metrics endpoint  |
+
+### Environment Variables
+
+Copy `.env.example` to `.env` in the `backend/` directory and configure:
+
+```bash
+cp backend/.env.example backend/.env
+```
+
+Key variables:
+
+| Variable                  | Default                          | Description                    |
+|---------------------------|----------------------------------|--------------------------------|
+| `PORT`                    | `3002`                           | API server port                |
+| `DATABASE_URL`            | `file:/app/data/dev.db`          | SQLite database path           |
+| `REDIS_URL`               | `redis://redis:6379`             | Redis connection URL           |
+| `STELLAR_NETWORK`         | `testnet`                        | `testnet` or `mainnet`         |
+| `ANCHOR_SECRET_KEY`       | —                                | Stellar anchor signing key     |
+| `JWT_SECRET`              | —                                | JWT signing secret             |
+| `JAEGER_ENDPOINT`         | `http://jaeger:14268/api/traces` | Distributed tracing endpoint   |
 
 ### Health Check
 
@@ -104,11 +127,24 @@ Verify the backend is running:
 curl http://localhost:3002/health
 ```
 
+Expected response: `{"status":"ok","timestamp":"..."}`
+
+### Logs
+
+```bash
+# Stream all service logs
+docker-compose logs -f
+
+# Stream a specific service
+docker-compose logs -f backend
+```
+
 ### Data Persistence
 
 Data is stored in Docker volumes:
 - `backend-data`: SQLite database
 - `redis-data`: Redis data
+- `prometheus-data`: Prometheus metrics history
 
 To remove volumes along with containers:
 
@@ -116,6 +152,23 @@ To remove volumes along with containers:
 docker-compose down -v
 ```
 
+### Rebuilding After Code Changes
+
+```bash
+docker-compose up -d --build backend
+```
+
 ### Development
 
 For local development without Docker, see the [Backend README](./backend/README.md).
+
+```bash
+# Install all dependencies
+npm run install:all
+
+# Start dashboard + demo server
+npm run dev
+
+# Start backend only
+cd backend && npm run dev
+```
